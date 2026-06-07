@@ -1,5 +1,5 @@
 {
-  "name": "homebridge-nuki",
+  "name": "homebridge-nuki-pro",
   "version": "0.12.0",
   "description": "Plugin for using Nuki devices in homebridge. Fork with Smart Lock 3.0/4.0 Pro (device type 4) support and night lock switch.",
   "license": "MIT",
