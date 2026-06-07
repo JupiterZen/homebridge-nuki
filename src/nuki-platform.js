@@ -47,7 +47,7 @@ function NukiPlatform(log, config, api) {
     platform.config.isApiEnabled = platform.config.isApiEnabled || false;
     platform.config.apiPort = platform.config.apiPort || 40011;
     platform.config.apiToken = platform.config.apiToken || null;
-    platform.config.supportedDeviceTypes = [0, 2];
+    platform.config.supportedDeviceTypes = [0, 2, 4];
     platform.config.requestBuffer = 3000;
     platform.config.requestRetryCount = 3;
 
@@ -135,6 +135,9 @@ NukiPlatform.prototype.getDevicesFromApi = function (callback) {
             }
             if (apiConfig.deviceType == 2) {
                 platform.devices.push(new NukiOpenerDevice(platform, apiConfig, config));
+            }
+            if (apiConfig.deviceType == 4) {
+                platform.devices.push(new NukiSmartLockDevice(platform, apiConfig, config));
             }
         }
 

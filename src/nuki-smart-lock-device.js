@@ -102,6 +102,21 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
         }
     }
 
+    // Gets the night lock switch service
+    let nightLockService = null;
+    if (config.nightLockSwitch) {
+        nightLockService = lockAccessory.getServiceByUUIDAndSubType(Service.Switch, 'NightLock');
+        if (!nightLockService) {
+            nightLockService = lockAccessory.addService(Service.Switch, (apiConfig.name || 'Nuki') + ' Nachtslot', 'NightLock');
+        }
+        device.nightLockService = nightLockService;
+    } else {
+        const existingNightLock = lockAccessory.getServiceByUUIDAndSubType(Service.Switch, 'NightLock');
+        if (existingNightLock) {
+            lockAccessory.removeService(existingNightLock);
+        }
+    }
+
     // Removes the old low battery characteristic
     let statusLowBatteryCharacteristic = lockService.getCharacteristic(Characteristic.StatusLowBattery);
     if (statusLowBatteryCharacteristic) {
@@ -240,6 +255,36 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
                     unlatchService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.UNSECURED);
                 }
             });
+            callback(null);
+        });
+    }
+
+    // Subscribes for changes of the night lock switch
+    if (nightLockService) {
+        nightLockService.getCharacteristic(Characteristic.On).on('set', function(value, callback) {
+            if (value) {
+                platform.log(config.nukiId + ' - Night Lock (full lock - 2 turns)');
+                platform.client.send('/lockAction?nukiId=' + config.nukiId + '&deviceType=0&action=6', function(actionSuccess, actionBody) {
+                    if (actionSuccess && actionBody.success) {
+                        nightLockService.updateCharacteristic(Characteristic.On, true);
+                        device.lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
+                        device.lockService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED);
+                    } else {
+                        nightLockService.updateCharacteristic(Characteristic.On, false);
+                    }
+                });
+            } else {
+                platform.log(config.nukiId + ' - Lock (1 turn, from night lock)');
+                platform.client.send('/lockAction?nukiId=' + config.nukiId + '&deviceType=0&action=2', function(actionSuccess, actionBody) {
+                    if (actionSuccess && actionBody.success) {
+                        nightLockService.updateCharacteristic(Characteristic.On, false);
+                        device.lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
+                        device.lockService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED);
+                    } else {
+                        nightLockService.updateCharacteristic(Characteristic.On, true);
+                    }
+                });
+            }
             callback(null);
         });
     }
