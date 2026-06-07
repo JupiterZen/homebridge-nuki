@@ -1,0 +1,151 @@
+{
+  "pluginAlias": "NukiPlatform",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "bridgeIpAddress": {
+        "title": "Bridge IP Address",
+        "type": "string",
+        "required": true,
+        "description": "The IP address of your Nuki Bridge."
+      },
+      "bridgeApiToken": {
+        "title": "Bridge API Token",
+        "type": "string",
+        "required": true,
+        "description": "The API token of your Nuki Bridge. Get it by pressing the button on the bridge and calling /auth on the Bridge API."
+      },
+      "bridgeApiPort": {
+        "title": "Bridge API Port",
+        "type": "integer",
+        "default": 8080,
+        "description": "The port of the Nuki Bridge API."
+      },
+      "hostNameOrIpAddress": {
+        "title": "Homebridge Host IP Address",
+        "type": "string",
+        "description": "The IP address of the machine running Homebridge. Used by the Nuki Bridge to send state callbacks."
+      },
+      "hostCallbackApiPort": {
+        "title": "Homebridge Callback Port",
+        "type": "integer",
+        "default": 40506,
+        "description": "The port on which Homebridge listens for callbacks from the Nuki Bridge."
+      },
+      "bridgeRebootSwitch": {
+        "title": "Bridge Reboot Switch",
+        "type": "boolean",
+        "default": false,
+        "description": "Adds a switch to HomeKit that reboots the Nuki Bridge."
+      },
+      "isApiEnabled": {
+        "title": "Enable Local API",
+        "type": "boolean",
+        "default": false,
+        "description": "Enables a local HTTP API on Homebridge for external integrations."
+      },
+      "apiPort": {
+        "title": "Local API Port",
+        "type": "integer",
+        "default": 40011,
+        "description": "Port for the local Homebridge API (only used when isApiEnabled is true)."
+      },
+      "apiToken": {
+        "title": "Local API Token",
+        "type": "string",
+        "description": "Token for the local Homebridge API (only used when isApiEnabled is true)."
+      },
+      "devices": {
+        "title": "Devices",
+        "type": "array",
+        "items": {
+          "title": "Device",
+          "type": "object",
+          "properties": {
+            "nukiId": {
+              "title": "Nuki ID",
+              "type": "integer",
+              "required": true,
+              "description": "The Nuki ID of the device, as returned by the Bridge API /list endpoint."
+            },
+            "defaultLockName": {
+              "title": "Lock Name",
+              "type": "string",
+              "default": "Lock",
+              "description": "The name of the lock service in HomeKit."
+            },
+            "defaultLatchName": {
+              "title": "Latch Name",
+              "type": "string",
+              "default": "Latch",
+              "description": "The name of the unlatch service in HomeKit."
+            },
+            "unlatchLock": {
+              "title": "Show Unlatch as Separate Lock",
+              "type": "boolean",
+              "default": false,
+              "description": "Adds a second lock service in HomeKit that triggers the unlatch (door opener) action."
+            },
+            "nightLockSwitch": {
+              "title": "Night Lock Switch",
+              "type": "boolean",
+              "default": false,
+              "description": "Adds a switch that triggers the full lock (2-turn night lock, action 6). Turning it off locks once (action 2)."
+            },
+            "isDoorSensorEnabled": {
+              "title": "Enable Door Sensor",
+              "type": "boolean",
+              "default": false,
+              "description": "Adds a contact sensor showing whether the door is open or closed (requires Nuki door sensor)."
+            },
+            "isSingleAccessoryModeEnabled": {
+              "title": "Single Accessory Mode",
+              "type": "boolean",
+              "default": false,
+              "description": "Combines all services (lock, latch, door sensor) into a single HomeKit accessory instead of separate ones."
+            },
+            "isRingToOpenEnabled": {
+              "title": "Ring to Open (Opener only)",
+              "type": "boolean",
+              "default": false,
+              "description": "For Nuki Opener: adds a switch that enables Ring to Open mode."
+            },
+            "isContinuousModeEnabled": {
+              "title": "Continuous Mode (Opener only)",
+              "type": "boolean",
+              "default": false,
+              "description": "For Nuki Opener: adds a switch that enables Continuous Mode (door stays open)."
+            }
+          }
+        }
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "title": "Nuki Bridge",
+      "items": ["bridgeIpAddress", "bridgeApiToken", "bridgeApiPort"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Homebridge Host",
+      "description": "Required for receiving real-time lock state updates from the Bridge.",
+      "items": ["hostNameOrIpAddress", "hostCallbackApiPort"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Devices",
+      "items": ["devices"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Advanced",
+      "expandable": true,
+      "expanded": false,
+      "items": ["bridgeRebootSwitch", "isApiEnabled", "apiPort", "apiToken"]
+    }
+  ]
+}

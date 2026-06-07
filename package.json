@@ -1,6 +1,6 @@
 {
   "name": "homebridge-nuki-pro",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Plugin for using Nuki devices in homebridge. Fork with Smart Lock 3.0/4.0 Pro (device type 4) support and night lock switch.",
   "license": "MIT",
   "keywords": [
@@ -8,21 +8,26 @@
     "homebridge",
     "homebridge-nuki",
     "nuki",
+    "nuki-smart-lock",
     "nuki-smart-lock-pro",
     "nuki-4"
   ],
+  "main": "index.js",
   "dependencies": {
     "request": "^2.88.0"
+  },
+  "devDependencies": {
+    "homebridge": "^1.6.0"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/JupiterZen/homebridge-nuki.git"
   },
   "bugs": {
-    "url": "http://github.com/JupiterZen/homebridge-nuki/issues"
+    "url": "https://github.com/JupiterZen/homebridge-nuki/issues"
   },
   "engines": {
-    "node": ">=0.12.0",
-    "homebridge": ">=0.2.0"
+    "node": ">=14.0.0",
+    "homebridge": ">=1.3.0"
   }
 }
