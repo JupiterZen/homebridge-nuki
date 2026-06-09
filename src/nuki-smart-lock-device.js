@@ -128,9 +128,9 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
     }
 
     // Updates the battery service
-    let batteryService = getServiceBySubType(lockAccessory, Service.BatteryService, 'Battery');
+    let batteryService = getServiceBySubType(lockAccessory, Service.Battery, 'Battery');
     if (!batteryService) {
-        batteryService = lockAccessory.addService(Service.BatteryService, 'Battery', 'Battery');
+        batteryService = lockAccessory.addService(Service.Battery, 'Battery', 'Battery');
     }
 
     // Stores the battery service
