@@ -5,6 +5,10 @@
  * @param apiConfig The device information provided by the Nuki Bridge API.
  * @param config The device configuration.
  */
+function getServiceBySubType(accessory, serviceType, subType) {
+    return accessory.services.find(function(s) { return s.UUID === serviceType.UUID && s.subtype === subType; }) || null;
+}
+
 function NukiOpenerDevice(platform, apiConfig, config) {
     const device = this;
     const { UUIDGen, Accessory, Characteristic, Service } = platform;
@@ -103,7 +107,7 @@ function NukiOpenerDevice(platform, apiConfig, config) {
     // Updates the RTO switch
     let ringToOpenSwitchService = null;
     if (switchAccessory && config.isRingToOpenEnabled) {
-        ringToOpenSwitchService = switchAccessory.getServiceByUUIDAndSubType(Service.Switch, 'RingToOpen');
+        ringToOpenSwitchService = getServiceBySubType(switchAccessory, Service.Switch, 'RingToOpen');
         if (!ringToOpenSwitchService) {
             ringToOpenSwitchService = switchAccessory.addService(Service.Switch, 'Ring to Open', 'RingToOpen');
         }
@@ -115,7 +119,7 @@ function NukiOpenerDevice(platform, apiConfig, config) {
     // Updates the continuous mode
     let continuousModeSwitchService = null;
     if (switchAccessory && config.isContinuousModeEnabled) {
-        continuousModeSwitchService = switchAccessory.getServiceByUUIDAndSubType(Service.Switch, 'ContinuousMode');
+        continuousModeSwitchService = getServiceBySubType(switchAccessory, Service.Switch, 'ContinuousMode');
         if (!continuousModeSwitchService) {
             continuousModeSwitchService = switchAccessory.addService(Service.Switch, 'Continuous Mode', 'ContinuousMode');
         }

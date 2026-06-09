@@ -5,6 +5,10 @@
  * @param apiConfig The device information provided by the Nuki Bridge API.
  * @param config The device configuration.
  */
+function getServiceBySubType(accessory, serviceType, subType) {
+    return accessory.services.find(function(s) { return s.UUID === serviceType.UUID && s.subtype === subType; }) || null;
+}
+
 function NukiSmartLockDevice(platform, apiConfig, config) {
     const device = this;
     const { UUIDGen, Accessory, Characteristic, Service } = platform;
@@ -78,7 +82,7 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
     }
 
     // Updates the lock
-    let lockService = lockAccessory.getServiceByUUIDAndSubType(Service.LockMechanism, 'Lock');
+    let lockService = getServiceBySubType(lockAccessory, Service.LockMechanism, 'Lock');
     if (!lockService) {
         lockService = lockAccessory.addService(Service.LockMechanism, device.lockName, 'Lock');
     }
@@ -87,7 +91,7 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
     device.lockService = lockService;
 
     // Updates the unlatch service
-    let unlatchService = lockAccessory.getServiceByUUIDAndSubType(Service.LockMechanism, 'Unlatch');
+    let unlatchService = getServiceBySubType(lockAccessory, Service.LockMechanism, 'Unlatch');
     if (config.unlatchLock) {
         if (!unlatchService) {
             unlatchService = lockAccessory.addService(Service.LockMechanism, device.latchName, 'Unlatch');
@@ -105,13 +109,13 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
     // Gets the night lock switch service
     let nightLockService = null;
     if (config.nightLockSwitch) {
-        nightLockService = lockAccessory.getServiceByUUIDAndSubType(Service.Switch, 'NightLock');
+        nightLockService = getServiceBySubType(lockAccessory, Service.Switch, 'NightLock');
         if (!nightLockService) {
             nightLockService = lockAccessory.addService(Service.Switch, (apiConfig.name || 'Nuki') + ' Nachtslot', 'NightLock');
         }
         device.nightLockService = nightLockService;
     } else {
-        const existingNightLock = lockAccessory.getServiceByUUIDAndSubType(Service.Switch, 'NightLock');
+        const existingNightLock = getServiceBySubType(lockAccessory, Service.Switch, 'NightLock');
         if (existingNightLock) {
             lockAccessory.removeService(existingNightLock);
         }
@@ -124,7 +128,7 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
     }
 
     // Updates the battery service
-    let batteryService = lockAccessory.getServiceByUUIDAndSubType(Service.BatteryService, 'Battery');
+    let batteryService = getServiceBySubType(lockAccessory, Service.BatteryService, 'Battery');
     if (!batteryService) {
         batteryService = lockAccessory.addService(Service.BatteryService, 'Battery', 'Battery');
     }
@@ -135,7 +139,7 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
     // Updates the contact sensor
     let contactSensorService = null;
     if (contactSensorAccessory && config.isDoorSensorEnabled) {
-        contactSensorService = contactSensorAccessory.getServiceByUUIDAndSubType(Service.ContactSensor, 'DoorSensor');
+        contactSensorService = getServiceBySubType(contactSensorAccessory, Service.ContactSensor, 'DoorSensor');
         if (!contactSensorService) {
             contactSensorService = contactSensorAccessory.addService(Service.ContactSensor, 'Door', 'DoorSensor');
         }
