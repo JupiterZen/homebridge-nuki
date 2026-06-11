@@ -106,6 +106,21 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
         }
     }
 
+    // Gets the lock switch service (Switch mirror of the lock, no HomeKit auth required)
+    let lockSwitchService = null;
+    if (config.lockSwitch) {
+        lockSwitchService = getServiceBySubType(lockAccessory, Service.Switch, 'LockSwitch');
+        if (!lockSwitchService) {
+            lockSwitchService = lockAccessory.addService(Service.Switch, (config.lockSwitchName || (apiConfig.name || 'Nuki') + ' Slot'), 'LockSwitch');
+        }
+        device.lockSwitchService = lockSwitchService;
+    } else {
+        const existingLockSwitch = getServiceBySubType(lockAccessory, Service.Switch, 'LockSwitch');
+        if (existingLockSwitch) {
+            lockAccessory.removeService(existingLockSwitch);
+        }
+    }
+
     // Gets the night lock switch service
     let nightLockService = null;
     if (config.nightLockSwitch) {
@@ -263,6 +278,36 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
         });
     }
 
+    // Subscribes for changes of the lock switch
+    if (lockSwitchService) {
+        lockSwitchService.getCharacteristic(Characteristic.On).on('set', function(value, callback) {
+            if (value) {
+                platform.log(config.nukiId + ' - Lock Switch: Unlock');
+                platform.client.send('/lockAction?nukiId=' + config.nukiId + '&deviceType=0&action=1', function(actionSuccess, actionBody) {
+                    if (actionSuccess && actionBody.success) {
+                        lockSwitchService.updateCharacteristic(Characteristic.On, true);
+                        device.lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
+                        device.lockService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.UNSECURED);
+                    } else {
+                        lockSwitchService.updateCharacteristic(Characteristic.On, false);
+                    }
+                });
+            } else {
+                platform.log(config.nukiId + ' - Lock Switch: Lock');
+                platform.client.send('/lockAction?nukiId=' + config.nukiId + '&deviceType=0&action=2', function(actionSuccess, actionBody) {
+                    if (actionSuccess && actionBody.success) {
+                        lockSwitchService.updateCharacteristic(Characteristic.On, false);
+                        device.lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
+                        device.lockService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED);
+                    } else {
+                        lockSwitchService.updateCharacteristic(Characteristic.On, true);
+                    }
+                });
+            }
+            callback(null);
+        });
+    }
+
     // Subscribes for changes of the night lock switch
     if (nightLockService) {
         nightLockService.getCharacteristic(Characteristic.On).on('set', function(value, callback) {
@@ -278,12 +323,12 @@ function NukiSmartLockDevice(platform, apiConfig, config) {
                     }
                 });
             } else {
-                platform.log(config.nukiId + ' - Lock (1 turn, from night lock)');
-                platform.client.send('/lockAction?nukiId=' + config.nukiId + '&deviceType=0&action=2', function(actionSuccess, actionBody) {
+                platform.log(config.nukiId + ' - Unlock (from night lock)');
+                platform.client.send('/lockAction?nukiId=' + config.nukiId + '&deviceType=0&action=1', function(actionSuccess, actionBody) {
                     if (actionSuccess && actionBody.success) {
                         nightLockService.updateCharacteristic(Characteristic.On, false);
-                        device.lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
-                        device.lockService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED);
+                        device.lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
+                        device.lockService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.UNSECURED);
                     } else {
                         nightLockService.updateCharacteristic(Characteristic.On, true);
                     }
@@ -319,6 +364,12 @@ NukiSmartLockDevice.prototype.update = function (state) {
             device.unlatchService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
             device.unlatchService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED);
         }
+        if (device.nightLockService) {
+            device.nightLockService.updateCharacteristic(Characteristic.On, true);
+        }
+        if (device.lockSwitchService) {
+            device.lockSwitchService.updateCharacteristic(Characteristic.On, false);
+        }
     }
     if (state.state == 3) {
         device.platform.log(device.nukiId + ' - Updating lock state: UNSECURED/UNSECURED');
@@ -329,6 +380,12 @@ NukiSmartLockDevice.prototype.update = function (state) {
             device.unlatchService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
             device.unlatchService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.SECURED);
         }
+        if (device.nightLockService) {
+            device.nightLockService.updateCharacteristic(Characteristic.On, false);
+        }
+        if (device.lockSwitchService) {
+            device.lockSwitchService.updateCharacteristic(Characteristic.On, true);
+        }
     }
     if (state.state == 5) {
         device.platform.log(device.nukiId + ' - Updating lock state: UNSECURED/UNSECURED');
@@ -338,6 +395,12 @@ NukiSmartLockDevice.prototype.update = function (state) {
             device.platform.log(device.nukiId + ' - Updating latch state: UNSECURED/UNSECURED');
             device.unlatchService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
             device.unlatchService.updateCharacteristic(Characteristic.LockTargetState, Characteristic.LockTargetState.UNSECURED);
+        }
+        if (device.nightLockService) {
+            device.nightLockService.updateCharacteristic(Characteristic.On, false);
+        }
+        if (device.lockSwitchService) {
+            device.lockSwitchService.updateCharacteristic(Characteristic.On, true);
         }
     }
     if (state.state == 254) {
