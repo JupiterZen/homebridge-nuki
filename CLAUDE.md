@@ -50,7 +50,12 @@ HF1 stuurt geen `fmod`/`auto` veld — fallback op `fpwr`+`fnst` toegevoegd in C
 **Bestand**: `homebridge-deebot/lib/platform.js`
 Plugin gebruikte `ServiceLabelIndex` zonder `ServiceLabel` service → HAP "out of compliance". Fix voegt `ServiceLabel` (namespace=1) toe vóór de eerste Switch service.
 
-### 7. WiZ tunable white warm-up fix
+### 7. Dyson PC3 type 438N
+**Bestand**: `productTypeInfo.js` in homebridge-dyson-pure-cool
+Type `438N` toegevoegd (TP14-AC, Find+Follow™). Serial: `K8T-EU-VCA0748A`, IP: `192.168.2.243`.
+Config: `isSingleAccessoryModeEnabled:true`, `isTemperatureSensorEnabled:true`.
+
+### 8. WiZ tunable white warm-up fix
 **Bestand**: `homebridge-wiz-lan/dist/wiz.js`
 Na elke restart start `cachedPilot` leeg. `setPilot` faalt de eerste 60s met "No cached state". AdaptiveLighting (alleen Tunable White) stuurt in die periode color-temp updates → fout → HomeKit cachet "No Response".
 Fix: roept direct na `bindSocket` `getPilot()` aan voor alle geïnitialiseerde accessories.
@@ -61,6 +66,7 @@ Fix: roept direct na `bindSocket` `getPilot()` aan voor alle geïnitialiseerde a
 | Device | IP | Plugin |
 |--------|-----|--------|
 | Dyson PC1/TP11 (438M) | 192.168.2.22 | homebridge-dyson-pure-cool |
+| Dyson PC3/TP14 (438N) | 192.168.2.243 | homebridge-dyson-pure-cool |
 | Dyson HF1 (635) | 192.168.2.217 | homebridge-dyson-pure-cool |
 | Nuki Bridge | 192.168.2.213:8080 | homebridge-nuki |
 | Deebot X11 "Marieke" | cloud | homebridge-deebot |
