@@ -11,7 +11,15 @@
 - **HAP bridge**: username `0E:73:46:80:3F:BB`, PIN `193-59-731`, port `51164`
 - **Advertiser**: `bonjour-hap`
 
+## Security
+
+- `config.json` staat in `.gitignore` — bevat credentials (Nuki token, WiZ MACs, etc.)
+- Geschiedenis is opgeschoond via `filter-branch` (2026-07-02)
+- **Nooit** `config.json` committen
+
 ## Kritische patches (gaan verloren bij update)
+
+Alle patches zitten in `startup.sh` op de Pi (`/home/justuspak/homebridge/startup.sh`) en draaien automatisch bij elke container start.
 
 ### 1. addIdentifyingMaterial fix — bridgeService.js
 **Bestand**: `/home/justuspak/homebridge/node_modules/homebridge/dist/bridgeService.js`
@@ -34,32 +42,24 @@ ssh pi-wp "grep -n 'addIdentifyingMaterial' /home/justuspak/homebridge/node_modu
 
 **Symptoom als patch weg is**: Bridge naam groeit (D1E2 → D1E2 E7AB → D1E2 E7AB E7AB), c# stijgt bij elke herstart, HomeKit toont "geen reactie" na herstart.
 
-### 3. Dyson PC1/TP11 (438M) patch
+### 3. Dyson HF1 (635) CurrentAirPurifierState fallback — dyson-pure-cool-device.js
 **Bestand**: `/home/justuspak/homebridge/node_modules/homebridge-dyson-pure-cool/src/dyson-pure-cool-device.js`
-Plugin `homebridge-dyson-pure-cool@2.9.3` — specifieke fix voor naam/services bug.
+HF1 stuurt geen `fmod`/`auto` veld — fallback op `fpwr`+`fnst` toegevoegd in CURRENT-STATE en STATE-CHANGE handlers.
 
-### 4. Dyson HF1 (635) patch
+### 4. Dyson type 635 (HF1) — productTypeInfo.js
 **Bestand**: `productTypeInfo.js` in homebridge-dyson-pure-cool
 Type `635` toegevoegd. Config: `isSingleAccessoryModeEnabled:true`, `isTemperatureSensorEnabled:false`.
 
-### 5. Dyson HF1 CurrentAirPurifierState fallback
-**Bestand**: `dyson-pure-cool-device.js`
-HF1 stuurt geen `fmod`/`auto` veld — fallback op `fpwr`+`fnst` toegevoegd in CURRENT-STATE en STATE-CHANGE handlers.
-
-### 6. Deebot ServiceLabel fix
-**Bestand**: `homebridge-deebot/lib/platform.js`
-Plugin gebruikte `ServiceLabelIndex` zonder `ServiceLabel` service → HAP "out of compliance". Fix voegt `ServiceLabel` (namespace=1) toe vóór de eerste Switch service.
-
-### 7. Dyson PC3 type 438N
-**Bestand**: `productTypeInfo.js` in homebridge-dyson-pure-cool
-Type `438N` toegevoegd (TP14-AC, Find+Follow™). Serial: `K8T-EU-VCA0748A`, IP: `192.168.2.243`.
-Config: `isSingleAccessoryModeEnabled:true`, `isTemperatureSensorEnabled:true`.
-
-### 8. WiZ tunable white warm-up fix
+### 5. WiZ tunable white warm-up fix — wiz.js
 **Bestand**: `homebridge-wiz-lan/dist/wiz.js`
 Na elke restart start `cachedPilot` leeg. `setPilot` faalt de eerste 60s met "No cached state". AdaptiveLighting (alleen Tunable White) stuurt in die periode color-temp updates → fout → HomeKit cachet "No Response".
 Fix: roept direct na `bindSocket` `getPilot()` aan voor alle geïnitialiseerde accessories.
 **Let op**: warm-up mag NIET in `initAccessory` — socket is dan nog niet gebonden en `socket.send()` auto-bindt op willekeurige poort, waarna expliciete `bind(38900)` crasht.
+
+### 6. Dyson PC3 type 438N — productTypeInfo.js
+**Bestand**: `productTypeInfo.js` in homebridge-dyson-pure-cool
+Type `438N` toegevoegd (TP14-AC, Find+Follow™). Serial: `K8T-EU-VCA0748A`, IP: `192.168.2.243`.
+Config: `isSingleAccessoryModeEnabled:false`, `isTemperatureSensorEnabled:true`.
 
 ## Devices
 
@@ -69,11 +69,31 @@ Fix: roept direct na `bindSocket` `getPilot()` aan voor alle geïnitialiseerde a
 | Dyson PC3/TP14 (438N) | 192.168.2.243 | homebridge-dyson-pure-cool |
 | Dyson HF1 (635) | 192.168.2.217 | homebridge-dyson-pure-cool |
 | Nuki Bridge | 192.168.2.213:8080 | homebridge-nuki |
-| Deebot X11 "Marieke" | cloud | homebridge-deebot |
-| SwitchBot | — | homebridge-switchbot (gepatcht) |
+| SwitchBot gordijnen | — | homebridge-switchbot (gepatcht) |
 | Sonos | — | homebridge-zp |
-| WiZ lampen | — | homebridge-wiz-lan |
+| WiZ lampen (14x) | zie tabel | homebridge-wiz-lan |
 | HomeConnect | — | homebridge-homeconnect |
+
+## WiZ lampen — MAC → naam mapping
+
+Alle 14 lampen staan met naam in `config.json` onder het WiZ platform (`devices` array).
+
+| MAC | Naam | Type | Kamer |
+|-----|------|------|-------|
+| 9877d5d14386 | Gang | RGB | Gang |
+| 9877d5d17ec8 | Grote Lamp Slaapkamer | RGB | Slaapkamer |
+| 9877d5d2e568 | Bedlampje Slaapkamer | RGB | Slaapkamer |
+| 9877d5c03d66 | Afzuigkap Links | RGB | Keuken |
+| 9877d5d2e70a | Grote Lamp Kinderkamer | RGB | Kinderkamer |
+| 9877d5cd3e3c | Afzuigkap Rechts | RGB | Keuken |
+| 9877d5d68222 | Badkamer | RGB | Badkamer |
+| 9877d5d68238 | Raam Rechts | RGB | Woonkamer |
+| 9877d5b0031c | Raam Links 1 | TW | Woonkamer |
+| 9877d505427c | Raam Links 2 | TW | Woonkamer |
+| 9877d5b00202 | Raam Links 3 | TW | Woonkamer |
+| 9877d50546ea | Raam Links 4 | TW | Woonkamer |
+| 9877d5b007e8 | Raam Links 5 | TW | Woonkamer |
+| 9877d5b0030c | Raam Links 6 | TW | Woonkamer |
 
 ## Nuki
 
